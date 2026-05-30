@@ -6,6 +6,7 @@ import VBar from "@/components/charts/v-bar";
 
 import districts from "@/public/data/districts.json";
 import communities from "@/public/data/communities.json";
+import electricDistrict from "@/public/data/electric_district.json";
 
 function rateColor(rate: number) {
   if (rate >= 80) return "#00B37E";
@@ -22,6 +23,10 @@ export default function DistrictPage() {
     .map((d) => ({ name: d.name, value: d.rate }))
     .sort((a, b) => a.value - b.value);
 
+  const backlog = [...districts]
+    .map((d) => ({ name: d.name, value: d.total - d.done }))
+    .sort((a, b) => a.value - b.value);
+
   return (
     <div>
       <SectionHeader icon={<Map size={20} />} title="District & Community Analysis" badge="Geospatial" />
@@ -32,6 +37,15 @@ export default function DistrictPage() {
         </ChartCard>
         <ChartCard title="Completion Rate ตามเขต (%)" sub="อัตราดำเนินการเสร็จแต่ละพื้นที่">
           <VBar data={byRate} color="#00B37E" height={320} unit="%" />
+        </ChartCard>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <ChartCard title="เขตไหน Backlog สูงสุด" sub="คำร้องที่ยังรอดำเนินการแต่ละเขต">
+          <VBar data={backlog} color="#E5484D" height={280} unit=" รายการ" />
+        </ChartCard>
+        <ChartCard title="งานไฟฟ้ากระจุกตรงไหน" sub="คำร้องหมวดไฟฟ้าแยกตามเขต">
+          <VBar data={electricDistrict} color="#E8960C" height={280} unit=" รายการ" />
         </ChartCard>
       </div>
 
