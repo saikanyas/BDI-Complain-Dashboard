@@ -8,6 +8,7 @@ import VBar from "@/components/charts/v-bar";
 import summary from "@/public/data/summary.json";
 import sla from "@/public/data/sla.json";
 import daysDist from "@/public/data/days_dist.json";
+import slaCategory from "@/public/data/sla_category.json";
 
 function SlaTag({ mean }: Readonly<{ mean: number }>) {
   if (mean <= 7)  return <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">ดีเยี่ยม</span>;
@@ -63,6 +64,15 @@ export default function PerformancePage() {
           <VBar data={daysDist.map((d) => ({ name: d.range, value: d.count }))} color="#7B2FFF" height={400} />
         </ChartCard>
       </div>
+
+      <ChartCard title="หมวดไหนปิดงานช้าที่สุด" sub="มัธยฐานวันดำเนินการจนเสร็จสิ้น (เฉพาะหมวดที่มี ≥3 รายการ)">
+        <HBar
+          data={slaCategory.map((d) => ({ name: d.name, value: d.median })).reverse()}
+          color="#E5484D"
+          height={420}
+          unit=" วัน"
+        />
+      </ChartCard>
 
       <ChartCard title="ตาราง SLA สรุปรายฝ่าย" sub="">
         <div className="overflow-x-auto">

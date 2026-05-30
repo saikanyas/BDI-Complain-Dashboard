@@ -7,6 +7,7 @@ import HBar from "@/components/charts/h-bar";
 import categories from "@/public/data/categories.json";
 import departments from "@/public/data/departments.json";
 import districts from "@/public/data/districts.json";
+import recurring from "@/public/data/recurring.json";
 
 export default function ComplaintsPage() {
   const distCount = districts
@@ -27,6 +28,12 @@ export default function ComplaintsPage() {
         </ChartCard>
         <ChartCard title="คำร้องตามเขต" sub="การกระจายตามพื้นที่">
           <VBar data={distCount} color="#00C2CB" height={360} />
+        </ChartCard>
+      </div>
+
+      <div className="mt-4">
+        <ChartCard title="Complaint ที่ Recurring สูงสุด" sub="หมวดคำร้องที่ซ้ำมากที่สุดในแต่ละเขต (Top 15)">
+          <HBar data={recurring} color="#E8960C" height={460} />
         </ChartCard>
       </div>
     </div>
