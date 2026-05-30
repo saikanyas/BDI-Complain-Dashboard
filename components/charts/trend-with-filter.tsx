@@ -4,12 +4,11 @@ import { useState } from "react";
 import TrendLine from "./trend-line";
 
 const PERIODS = [
-  { label: "7 วัน",    days: 7   },
-  { label: "1 เดือน",  days: 30  },
-  { label: "2 เดือน",  days: 60  },
   { label: "3 เดือน",  days: 90  },
   { label: "5 เดือน",  days: 150 },
   { label: "12 เดือน", days: 365 },
+  { label: "2 ปี",     days: 730 },
+  { label: "3 ปี",     days: 1095 },
   { label: "ทั้งหมด",  days: 0   },
 ] as const;
 
@@ -29,8 +28,8 @@ export default function TrendWithFilter({
   data,
   height = 240,
 }: {
-  data: { month: string; count: number }[];
-  height?: number;
+  readonly data: { month: string; count: number }[];
+  readonly height?: number;
 }) {
   const [active, setActive] = useState<Period>(PERIODS[1]);
 
