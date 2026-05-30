@@ -15,7 +15,7 @@ export default function KpiCard({ label, value, sub, color = "#0057FF", icon, de
         style={{ borderTop: `3px solid ${color}` }}
       >
         <div className="text-xl mb-2" style={{ color }}>{icon}</div>
-        <div className="text-2xl font-800 text-[#0D1117] tabular-nums leading-none tracking-tight">
+        <div className="text-[20px] font-800 text-[#0D1117] tabular-nums leading-none tracking-tight">
           {value}
         </div>
         <div className="text-[11px] font-700 uppercase tracking-widest text-[#94A3B8] mt-1.5">
