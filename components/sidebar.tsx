@@ -1,34 +1,32 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard, BarChart2, Timer, Map, Building2, BrainCircuit, Menu, X
+  LayoutDashboard, BarChart2, Timer, Map, Building2, BrainCircuit, ChevronRight, X, ClipboardPlus
 } from "lucide-react";
 
 const NAV = [
-  { href: "/",            label: "ภาพรวม",           icon: LayoutDashboard },
-  { href: "/complaints",  label: "วิเคราะห์คำร้อง",  icon: BarChart2       },
-  { href: "/performance", label: "Performance & SLA",  icon: Timer           },
-  { href: "/district",    label: "District & Map",     icon: Map             },
-  { href: "/predict",     label: "AI Prediction",      icon: BrainCircuit    },
+  { href: "/",            label: "ภาพรวม",              icon: LayoutDashboard },
+  { href: "/complaints",  label: "วิเคราะห์คำร้อง",     icon: BarChart2       },
+  { href: "/performance", label: "ประสิทธิภาพ & SLA",    icon: Timer           },
+  { href: "/district",    label: "วิเคราะห์แยกตามเขต",  icon: Map             },
+  { href: "/predict",     label: "ลงคะแนนคำร้อง",       icon: BrainCircuit    },
+  { href: "/submit",      label: "ยื่นคำร้อง",           icon: ClipboardPlus   },
 ];
 
 export default function Sidebar() {
   const path = usePathname();
-  const [open, setOpen] = useState(true);
-
-  useEffect(() => {
-    setOpen(window.innerWidth >= 1024);
-  }, []);
+  const [open, setOpen] = useState(false);
 
   return (
     <>
       {/* Mobile backdrop */}
       {open && (
-        <div
-          className="fixed inset-0 bg-black/40 z-20 lg:hidden"
+        <button
+          aria-label="ปิด sidebar"
+          className="fixed inset-0 bg-black/40 z-20 lg:hidden w-full cursor-default border-0 p-0"
           onClick={() => setOpen(false)}
         />
       )}
@@ -95,13 +93,15 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      {/* Hamburger — visible only when sidebar is closed on mobile */}
+      {/* Drawer tab — sticks out from left edge when sidebar is closed */}
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed top-4 left-4 z-40 lg:hidden bg-white rounded-xl shadow-md border border-[#E2E8F0] p-2.5"
+          className="fixed left-0 top-1/2 -translate-y-1/2 z-40 lg:hidden
+                     bg-white border border-l-0 border-[#E2E8F0]
+                     rounded-r-xl shadow-md px-1 py-4 flex items-center"
         >
-          <Menu size={20} className="text-[#334155]" />
+          <ChevronRight size={16} className="text-[#334155]" />
         </button>
       )}
     </>

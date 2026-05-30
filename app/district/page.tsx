@@ -2,6 +2,7 @@ import { Map } from "lucide-react";
 import SectionHeader from "@/components/section-header";
 import ChartCard from "@/components/chart-card";
 import HBar from "@/components/charts/h-bar";
+import VBar from "@/components/charts/v-bar";
 
 import districts from "@/public/data/districts.json";
 import communities from "@/public/data/communities.json";
@@ -27,10 +28,10 @@ export default function DistrictPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <ChartCard title="จำนวนคำร้องตามเขต" sub="">
-          <HBar data={byCount} color="#0057FF" height={320} />
+          <VBar data={byCount} color="#0057FF" height={320} />
         </ChartCard>
         <ChartCard title="Completion Rate ตามเขต (%)" sub="อัตราดำเนินการเสร็จแต่ละพื้นที่">
-          <HBar data={byRate} color="#00B37E" height={320} unit="%" />
+          <VBar data={byRate} color="#00B37E" height={320} unit="%" />
         </ChartCard>
       </div>
 
@@ -44,9 +45,11 @@ export default function DistrictPage() {
           <table className="w-full text-[13px]">
             <thead>
               <tr className="border-b border-[#E2E8F0]">
-                {["เขต", "คำร้องทั้งหมด", "เสร็จแล้ว", "รอดำเนินการ", "Completion Rate"].map((h) => (
-                  <th key={h} className="text-left py-2.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-[#94A3B8]">{h}</th>
-                ))}
+                <th className="text-left py-2.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-[#94A3B8]">เขต</th>
+                <th className="text-left py-2.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-[#94A3B8]">คำร้องทั้งหมด</th>
+                <th className="hidden sm:table-cell text-left py-2.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-[#94A3B8]">เสร็จแล้ว</th>
+                <th className="hidden sm:table-cell text-left py-2.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-[#94A3B8]">รอดำเนินการ</th>
+                <th className="text-left py-2.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-[#94A3B8]">อัตราเสร็จสิ้น</th>
               </tr>
             </thead>
             <tbody>
@@ -54,8 +57,8 @@ export default function DistrictPage() {
                 <tr key={row.name} className="border-b border-[#F1F5F9] hover:bg-[#F8FAFC]">
                   <td className="py-2.5 px-3 font-medium text-[#0D1117]">{row.name}</td>
                   <td className="py-2.5 px-3 text-[#334155]">{row.total.toLocaleString()}</td>
-                  <td className="py-2.5 px-3 text-[#334155]">{row.done.toLocaleString()}</td>
-                  <td className="py-2.5 px-3 text-[#334155]">{(row.total - row.done).toLocaleString()}</td>
+                  <td className="hidden sm:table-cell py-2.5 px-3 text-[#334155]">{row.done.toLocaleString()}</td>
+                  <td className="hidden sm:table-cell py-2.5 px-3 text-[#334155]">{(row.total - row.done).toLocaleString()}</td>
                   <td className="py-2.5 px-3">
                     <div className="flex items-center gap-2">
                       <div className="flex-1 bg-[#F1F5F9] rounded-full h-1.5 max-w-[80px]">

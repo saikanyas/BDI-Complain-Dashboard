@@ -1,6 +1,7 @@
-import { BarChart2, Building2, MapPin, Layers } from "lucide-react";
+import { BarChart2 } from "lucide-react";
 import SectionHeader from "@/components/section-header";
 import ChartCard from "@/components/chart-card";
+import VBar from "@/components/charts/v-bar";
 import HBar from "@/components/charts/h-bar";
 
 import categories from "@/public/data/categories.json";
@@ -25,7 +26,7 @@ export default function ComplaintsPage() {
           <HBar data={departments} color="#7B2FFF" height={360} />
         </ChartCard>
         <ChartCard title="คำร้องตามเขต" sub="การกระจายตามพื้นที่">
-          <HBar data={distCount} color="#00C2CB" height={360} />
+          <VBar data={distCount} color="#00C2CB" height={360} />
         </ChartCard>
       </div>
     </div>

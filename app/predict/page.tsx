@@ -1,137 +1,188 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BrainCircuit, AlertTriangle, Clock, CheckCircle2 } from "lucide-react";
+import { ChevronUp, ChevronDown, AlertTriangle } from "lucide-react";
 import SectionHeader from "@/components/section-header";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const STORAGE_KEY = "bdi_votes_v2";
 
-interface PredictRow {
+interface PendingRow {
   cid: string;
   text: string;
   district: string;
-  community: string;
-  received: string | null;
   category: string;
+  received: string | null;
   department: string;
+  priority: string;
   predicted_days: number;
   expected_done: string | null;
-  overdue: boolean;
 }
 
-function StatusBadge({ overdue, expected }: { overdue: boolean; expected: string | null }) {
-  if (!expected) return <span className="text-[#94A3B8] text-xs">ไม่ระบุ</span>;
-  if (overdue) {
-    return (
-      <span className="inline-flex items-center gap-1 text-xs font-medium text-[#E5484D] bg-[#FEF2F2] px-2 py-0.5 rounded-full">
-        <AlertTriangle size={11} /> เกินกำหนด
-      </span>
-    );
+const PRIORITY_STYLE: Record<string, string> = {
+  "สูง":   "bg-red-50 text-red-600 border-red-200",
+  "กลาง":  "bg-amber-50 text-amber-600 border-amber-200",
+  "ต่ำ":   "bg-emerald-50 text-emerald-600 border-emerald-200",
+};
+
+type UserVotes = Record<string, 1 | -1 | 0>;
+
+/* deterministic fake votes from complaint ID so they stay consistent */
+function fakeVotes(id: string): { up: number; down: number } {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) {
+    h = Math.trunc(Math.imul(31, h) + (id.codePointAt(i) ?? 0));
   }
-  return (
-    <span className="inline-flex items-center gap-1 text-xs font-medium text-[#00B37E] bg-[#F0FDF9] px-2 py-0.5 rounded-full">
-      <Clock size={11} /> กำลังดำเนินการ
-    </span>
-  );
+  const abs = Math.abs(h);
+  return { up: 10 + (abs % 70), down: 1 + ((abs >> 4) % 12) };
+}
+
+function netScore(cid: string, uv: UserVotes): number {
+  const { up, down } = fakeVotes(cid);
+  const u = uv[cid] ?? 0;
+  return up + (u === 1 ? 1 : 0) - down - (u === -1 ? 1 : 0);
+}
+
+function loadVotes(): UserVotes {
+  if (globalThis.window === undefined) return {};
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}") as UserVotes; }
+  catch { return {}; }
+}
+
+function scoreColor(s: number) {
+  if (s > 0) return "text-[#E8960C]";
+  if (s < 0) return "text-[#E5484D]";
+  return "text-[#94A3B8]";
+}
+
+function saveVotes(v: UserVotes) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(v));
 }
 
 export default function PredictPage() {
-  const [rows, setRows]     = useState<PredictRow[]>([]);
+  const [rows, setRows]       = useState<PendingRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError]   = useState<string | null>(null);
+  const [error, setError]     = useState<string | null>(null);
+  const [userVotes, setUserVotes] = useState<UserVotes>({});
+  const [sortBy, setSortBy] = useState<"votes" | "date">("votes");
 
   useEffect(() => {
+    setUserVotes(loadVotes());
     fetch(`${API}/pending-predictions`)
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then((data) => { setRows(data); setLoading(false); })
-      .catch((e) => { setError(e.message); setLoading(false); });
+      .then((r) => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
+      .then((data: PendingRow[]) => { setRows(data); setLoading(false); })
+      .catch((e: Error) => { setError(e.message); setLoading(false); });
   }, []);
 
-  const overdueCount = rows.filter((r) => r.overdue).length;
-  const onTimeCount  = rows.filter((r) => !r.overdue && r.expected_done).length;
+  function vote(cid: string, dir: 1 | -1) {
+    setUserVotes((prev) => {
+      const cur = prev[cid] ?? 0;
+      const next: UserVotes = { ...prev, [cid]: cur === dir ? 0 : dir };
+      saveVotes(next);
+      return next;
+    });
+  }
+
+  const sorted = [...rows].sort((a, b) => {
+    if (sortBy === "date") {
+      return (a.expected_done ?? "9999") < (b.expected_done ?? "9999") ? -1 : 1;
+    }
+    return netScore(b.cid, userVotes) - netScore(a.cid, userVotes);
+  });
 
   return (
     <div>
       <SectionHeader
-        icon={<BrainCircuit size={20} />}
-        title="AI Prediction — คำร้องที่รอดำเนินการ"
-        badge={`${rows.length} รายการ`}
+        icon={<ChevronUp size={20} />}
+        title="ลงคะแนนคำร้องที่รอดำเนินการ"
+        badge={loading ? "..." : `${rows.length} รายการ`}
       />
 
-      {/* Summary KPIs */}
-      {!loading && !error && (
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          {[
-            { label: "คำร้องรอดำเนินการ", value: rows.length,    color: "#0057FF", icon: <BrainCircuit size={16} /> },
-            { label: "เกินกำหนด",          value: overdueCount,  color: "#E5484D", icon: <AlertTriangle size={16} /> },
-            { label: "กำลังดำเนินการ",     value: onTimeCount,   color: "#00B37E", icon: <CheckCircle2 size={16} /> },
-          ].map(({ label, value, color, icon }) => (
-            <div key={label} className="bg-white rounded-2xl p-4 border border-[#E2E8F0] flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: `${color}18`, color }}>
-                {icon}
-              </div>
-              <div>
-                <p className="text-[22px] font-700 text-[#0D1117] leading-none">{value}</p>
-                <p className="text-[12px] text-[#94A3B8] mt-0.5">{label}</p>
-              </div>
-            </div>
-          ))}
+      <div className="flex items-center gap-2.5 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-5 text-[13px] text-amber-800">
+        <AlertTriangle size={15} className="shrink-0 text-amber-500" />
+        <span>คำร้องมาจากข้อมูลจริง · <strong>คะแนนโหวตเริ่มต้นเป็นข้อมูลสาธิตเพื่อ prototype เท่านั้น</strong> · คะแนนที่คุณโหวตจะถูกบันทึกไว้ในเบราว์เซอร์</span>
+      </div>
+
+      {/* Sort toggle */}
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-[12px] text-[#94A3B8]">เรียงตาม:</span>
+        {(["votes", "date"] as const).map((opt) => (
+          <button
+            key={opt}
+            onClick={() => setSortBy(opt)}
+            className={`text-[12px] px-3 py-1.5 rounded-lg border transition-colors ${
+              sortBy === opt
+                ? "bg-[#0057FF] text-white border-[#0057FF]"
+                : "bg-white text-[#334155] border-[#E2E8F0] hover:border-[#0057FF] hover:text-[#0057FF]"
+            }`}
+          >
+            {opt === "votes" ? "คะแนนโหวต" : "วันที่คาดเสร็จ"}
+          </button>
+        ))}
+      </div>
+
+      {loading && (
+        <div className="flex justify-center items-center h-48 text-[#94A3B8] text-sm">กำลังโหลดข้อมูล...</div>
+      )}
+      {error && (
+        <div className="flex flex-col items-center justify-center h-48 gap-1">
+          <p className="text-[#E5484D] font-medium">เชื่อมต่อ API ไม่ได้</p>
+          <p className="text-[#94A3B8] text-xs">{API}</p>
         </div>
       )}
 
-      {/* Table */}
-      <div className="bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden">
-        {loading && (
-          <div className="flex items-center justify-center h-48 text-[#94A3B8] text-sm">
-            กำลังโหลดข้อมูล...
-          </div>
-        )}
-        {error && (
-          <div className="flex flex-col items-center justify-center h-48 gap-2">
-            <p className="text-[#E5484D] font-medium">เชื่อมต่อ API ไม่ได้</p>
-            <p className="text-[#94A3B8] text-xs">ตรวจสอบว่า API รันอยู่ที่ {API}</p>
-          </div>
-        )}
-        {!loading && !error && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-[13px]">
-              <thead>
-                <tr className="border-b border-[#E2E8F0] bg-[#F8FAFC]">
-                  {["เลขคำร้อง", "ข้อความ", "เขต", "วันที่รับ", "ประเภท", "หน่วยงาน", "คาดเสร็จใน", "วันที่คาดเสร็จ", "สถานะ"].map((h) => (
-                    <th key={h} className="text-left px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-[#94A3B8] whitespace-nowrap">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.cid} className="border-b border-[#F1F5F9] hover:bg-[#F8FAFC]">
-                    <td className="px-3 py-2.5 font-medium text-[#0057FF] whitespace-nowrap">{row.cid || "—"}</td>
-                    <td className="px-3 py-2.5 text-[#334155] max-w-[220px] truncate" title={row.text}>{row.text}</td>
-                    <td className="px-3 py-2.5 text-[#334155] whitespace-nowrap">{row.district || "—"}</td>
-                    <td className="px-3 py-2.5 text-[#94A3B8] whitespace-nowrap">{row.received ?? "—"}</td>
-                    <td className="px-3 py-2.5 text-[#334155] whitespace-nowrap">{row.category}</td>
-                    <td className="px-3 py-2.5 text-[#334155] whitespace-nowrap">{row.department}</td>
-                    <td className="px-3 py-2.5 text-center">
-                      <span className="font-semibold text-[#334155]">{row.predicted_days}</span>
-                      <span className="text-[#94A3B8] ml-0.5">วัน</span>
-                    </td>
-                    <td className="px-3 py-2.5 text-[#334155] whitespace-nowrap">{row.expected_done ?? "—"}</td>
-                    <td className="px-3 py-2.5">
-                      <StatusBadge overdue={row.overdue} expected={row.expected_done} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {!loading && !error && (
+        <div className="space-y-3">
+          {sorted.map((c) => {
+            const uv  = userVotes[c.cid] ?? 0;
+            const s   = netScore(c.cid, userVotes);
+            return (
+              <div key={c.cid} className="bg-white rounded-2xl border border-[#E2E8F0] p-4 flex gap-3 hover:shadow-md transition-shadow">
+
+                {/* Vote column */}
+                <div className="flex flex-col items-center gap-0.5 shrink-0 pt-0.5">
+                  <button
+                    onClick={() => vote(c.cid, 1)}
+                    className={`p-1 rounded-lg transition-colors ${uv === 1 ? "text-[#E8960C] bg-amber-50" : "text-[#CBD5E1] hover:text-[#E8960C] hover:bg-amber-50"}`}
+                  >
+                    <ChevronUp size={22} strokeWidth={2.5} />
+                  </button>
+                  <span className={`text-[15px] font-700 tabular-nums leading-none py-0.5 ${scoreColor(s)}`}>
+                    {s}
+                  </span>
+                  <button
+                    onClick={() => vote(c.cid, -1)}
+                    className={`p-1 rounded-lg transition-colors ${uv === -1 ? "text-[#0057FF] bg-blue-50" : "text-[#CBD5E1] hover:text-[#0057FF] hover:bg-blue-50"}`}
+                  >
+                    <ChevronDown size={22} strokeWidth={2.5} />
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] font-600 text-[#0D1117] leading-snug">{c.text}</p>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2">
+                    <span className={`text-[11px] rounded-full px-2 py-0.5 font-semibold border ${PRIORITY_STYLE[c.priority] ?? PRIORITY_STYLE["กลาง"]}`}>
+                      {c.priority}
+                    </span>
+                    <span className="text-[11px] bg-[#EFF6FF] text-[#0057FF] rounded-full px-2 py-0.5 font-medium">{c.district || "ไม่ระบุเขต"}</span>
+                    <span className="text-[11px] bg-[#F8FAFC] text-[#334155] rounded-full px-2 py-0.5 border border-[#E2E8F0]">{c.category}</span>
+                    <span className="text-[11px] text-[#CBD5E1] hidden sm:inline">{c.department}</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-3 mt-2 text-[11px] text-[#94A3B8]">
+                    <span>รับเรื่อง {c.received ?? "—"}</span>
+                    {c.expected_done && (
+                      <span className="text-[#E8960C]">คาดเสร็จ {c.expected_done}</span>
+                    )}
+                    <span className="text-[11px] text-[#94A3B8] font-medium">{c.predicted_days} วัน</span>
+                  </div>
+                </div>
+
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
