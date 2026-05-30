@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard, BarChart2, Timer, Map, Building2
+  LayoutDashboard, BarChart2, Timer, Map, Building2, BrainCircuit
 } from "lucide-react";
 
 const NAV = [
@@ -11,6 +11,7 @@ const NAV = [
   { href: "/complaints",  label: "วิเคราะห์คำร้อง",  icon: BarChart2       },
   { href: "/performance", label: "Performance & SLA",  icon: Timer           },
   { href: "/district",    label: "District & Map",     icon: Map             },
+  { href: "/predict",     label: "AI Prediction",      icon: BrainCircuit    },
 ];
 
 export default function Sidebar() {
