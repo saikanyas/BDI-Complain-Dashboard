@@ -2,14 +2,13 @@ import { ClipboardList, CheckCircle, Clock, Timer, Trophy, Gauge } from "lucide-
 import KpiCard from "@/components/kpi-card";
 import ChartCard from "@/components/chart-card";
 import TrendLine from "@/components/charts/trend-line";
-import HBar from "@/components/charts/h-bar";
+import VBar from "@/components/charts/v-bar";
 import Donut from "@/components/charts/donut";
 
 import summary from "@/public/data/summary.json";
 import trend from "@/public/data/trend.json";
 import status from "@/public/data/status.json";
 import priority from "@/public/data/priority.json";
-import sentiment from "@/public/data/sentiment.json";
 import districts from "@/public/data/districts.json";
 
 const PRIORITY_COLORS: Record<string, string> = {
@@ -50,12 +49,12 @@ export default function OverviewPage() {
         </div>
         <div className="lg:col-span-2">
           <ChartCard title="สถานะคำร้อง" sub="การกระจายตามสถานะปัจจุบัน">
-            <HBar data={status} color="#0057FF" height={260} />
+            <VBar data={status} color="#0057FF" height={260} />
           </ChartCard>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <ChartCard title="ระดับความสำคัญ" sub="จัดลำดับจากคำร้องเร่งด่วน">
           <Donut
             data={priority}
@@ -63,11 +62,8 @@ export default function OverviewPage() {
             height={240}
           />
         </ChartCard>
-        <ChartCard title="Sentiment" sub="อารมณ์จากเนื้อหาคำร้อง">
-          <Donut data={sentiment} colors={["#E5484D", "#E8960C", "#00B37E"]} height={240} />
-        </ChartCard>
         <ChartCard title="Completion Rate ตามเขต" sub="อัตราดำเนินการเสร็จแต่ละพื้นที่">
-          <HBar data={distRate} color="#00B37E" height={240} unit="%" />
+          <VBar data={distRate} color="#00B37E" height={240} unit="%" />
         </ChartCard>
       </div>
     </div>

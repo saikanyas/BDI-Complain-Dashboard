@@ -2,7 +2,7 @@ import { Timer, BarChart2, AlertOctagon, CheckCircle } from "lucide-react";
 import KpiCard from "@/components/kpi-card";
 import SectionHeader from "@/components/section-header";
 import ChartCard from "@/components/chart-card";
-import HBar from "@/components/charts/h-bar";
+import VBar from "@/components/charts/h-bar";
 
 import summary from "@/public/data/summary.json";
 import sla from "@/public/data/sla.json";
@@ -33,10 +33,10 @@ export default function PerformancePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <ChartCard title="Average SLA ตามฝ่าย" sub="ต่ำกว่า 7 วัน · ต่ำกว่า 14 วัน · เกิน 14 วัน">
-          <HBar data={slaBar} color="#0057FF" height={400} unit=" วัน" />
+          <VBar data={slaBar} color="#0057FF" height={400} unit=" วัน" />
         </ChartCard>
         <ChartCard title="การกระจายวันดำเนินการ" sub="Histogram แสดงความถี่ของจำนวนวัน">
-          <HBar data={daysDist.map((d) => ({ name: d.range, value: d.count }))} color="#7B2FFF" height={400} />
+          <VBar data={daysDist.map((d) => ({ name: d.range, value: d.count }))} color="#7B2FFF" height={400} />
         </ChartCard>
       </div>
 

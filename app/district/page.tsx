@@ -1,7 +1,7 @@
 import { Map } from "lucide-react";
 import SectionHeader from "@/components/section-header";
 import ChartCard from "@/components/chart-card";
-import HBar from "@/components/charts/h-bar";
+import VBar from "@/components/charts/h-bar";
 
 import districts from "@/public/data/districts.json";
 import communities from "@/public/data/communities.json";
@@ -27,15 +27,15 @@ export default function DistrictPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <ChartCard title="จำนวนคำร้องตามเขต" sub="">
-          <HBar data={byCount} color="#0057FF" height={320} />
+          <VBar data={byCount} color="#0057FF" height={320} />
         </ChartCard>
         <ChartCard title="Completion Rate ตามเขต (%)" sub="อัตราดำเนินการเสร็จแต่ละพื้นที่">
-          <HBar data={byRate} color="#00B37E" height={320} unit="%" />
+          <VBar data={byRate} color="#00B37E" height={320} unit="%" />
         </ChartCard>
       </div>
 
       <ChartCard title="Top 15 ชุมชนที่มีคำร้องมากที่สุด" sub="">
-        <HBar data={communities} color="#7B2FFF" height={440} />
+        <VBar data={communities} color="#7B2FFF" height={440} />
       </ChartCard>
 
       {/* District summary table */}
