@@ -31,7 +31,7 @@ export default function TrendWithFilter({
   readonly data: { month: string; count: number }[];
   readonly height?: number;
 }) {
-  const [active, setActive] = useState<Period>(PERIODS[1]);
+  const [active, setActive] = useState<Period>(PERIODS[4]);
 
   const filtered = filterData(data, active.days);
 
