@@ -1,0 +1,12 @@
+{
+  "total": 462,
+  "done": 445,
+  "pending": 17,
+  "avg_sla": 31.2,
+  "median_sla": 15.0,
+  "max_sla": 385,
+  "completion_rate": 96.3,
+  "top_category": "ซ่อมแซมไฟฟ้าชำรุด",
+  "total_districts": 6,
+  "total_depts": 8
+}
