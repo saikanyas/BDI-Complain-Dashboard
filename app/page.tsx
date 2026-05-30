@@ -1,7 +1,7 @@
 import { ClipboardList, CheckCircle, Clock, Timer, Trophy, Gauge } from "lucide-react";
 import KpiCard from "@/components/kpi-card";
 import ChartCard from "@/components/chart-card";
-import TrendLine from "@/components/charts/trend-line";
+import TrendWithFilter from "@/components/charts/trend-with-filter";
 import VBar from "@/components/charts/v-bar";
 import HBar from "@/components/charts/h-bar";
 import Donut from "@/components/charts/donut";
@@ -46,7 +46,7 @@ export default function OverviewPage() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-4">
         <div className="lg:col-span-3">
           <ChartCard title="แนวโน้มคำร้องรายเดือน" sub="จำนวนคำร้องที่เข้ามาแต่ละเดือน">
-            <TrendLine data={trend} height={260} />
+            <TrendWithFilter data={trend} height={220} />
           </ChartCard>
         </div>
         <div className="lg:col-span-2">
