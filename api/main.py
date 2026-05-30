@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from model import load_data, train_models, build_predictions
+from model import load_data, train_models, train_priority_model, build_predictions
 
 _state: dict = {}
 
@@ -12,10 +12,12 @@ _state: dict = {}
 async def lifespan(app: FastAPI):
     df = load_data()
     cat_model, dept_model, tok_fn = train_models(df[df["done"]].copy())
-    _state["df"]         = df
-    _state["cat_model"]  = cat_model
-    _state["dept_model"] = dept_model
-    _state["tok_fn"]     = tok_fn
+    priority_model = train_priority_model(df[df["done"]].copy(), tok_fn)
+    _state["df"]             = df
+    _state["cat_model"]      = cat_model
+    _state["dept_model"]     = dept_model
+    _state["tok_fn"]         = tok_fn
+    _state["priority_model"] = priority_model
     yield
 
 
@@ -43,4 +45,5 @@ def pending_predictions():
         _state["cat_model"],
         _state["dept_model"],
         _state["tok_fn"],
+        _state["priority_model"],
     )

@@ -4,15 +4,16 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard, BarChart2, Timer, Map, Building2, BrainCircuit, ChevronRight, X
+  LayoutDashboard, BarChart2, Timer, Map, Building2, BrainCircuit, ChevronRight, X, ClipboardPlus
 } from "lucide-react";
 
 const NAV = [
-  { href: "/",            label: "ภาพรวม",           icon: LayoutDashboard },
-  { href: "/complaints",  label: "วิเคราะห์คำร้อง",  icon: BarChart2       },
-  { href: "/performance", label: "Performance & SLA",  icon: Timer           },
-  { href: "/district",    label: "District & Map",     icon: Map             },
-  { href: "/predict",     label: "AI Prediction",      icon: BrainCircuit    },
+  { href: "/",            label: "ภาพรวม",              icon: LayoutDashboard },
+  { href: "/complaints",  label: "วิเคราะห์คำร้อง",     icon: BarChart2       },
+  { href: "/performance", label: "ประสิทธิภาพ & SLA",    icon: Timer           },
+  { href: "/district",    label: "วิเคราะห์แยกตามเขต",  icon: Map             },
+  { href: "/predict",     label: "ลงคะแนนคำร้อง",       icon: BrainCircuit    },
+  { href: "/submit",      label: "ยื่นคำร้อง",           icon: ClipboardPlus   },
 ];
 
 export default function Sidebar() {
@@ -23,8 +24,9 @@ export default function Sidebar() {
     <>
       {/* Mobile backdrop */}
       {open && (
-        <div
-          className="fixed inset-0 bg-black/40 z-20 lg:hidden"
+        <button
+          aria-label="ปิด sidebar"
+          className="fixed inset-0 bg-black/40 z-20 lg:hidden w-full cursor-default border-0 p-0"
           onClick={() => setOpen(false)}
         />
       )}
