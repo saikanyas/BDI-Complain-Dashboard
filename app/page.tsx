@@ -13,7 +13,7 @@ import sentiment from "@/public/data/sentiment.json";
 import districts from "@/public/data/districts.json";
 
 const PRIORITY_COLORS: Record<string, string> = {
-  "🔴 สูง": "#E5484D", "🟡 กลาง": "#E8960C", "🟢 ต่ำ": "#00B37E",
+  "สูง": "#E5484D", "กลาง": "#E8960C", "ต่ำ": "#00B37E",
 };
 
 export default function OverviewPage() {
