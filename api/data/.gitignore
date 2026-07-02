@@ -3,17 +3,21 @@ venv/
 __pycache__/
 *.py[cod]
 
-# Environment
+# Environment variables
 .env
 
 # macOS
 .DS_Store
 
+# VS Code
+.vscode/
+
 # Node.js
 node_modules/
 
-# VS Code
-.vscode/
-EOFEOF
+# Build files
+dist/
+build/
 
-.next/
+# Logs
+*.log
