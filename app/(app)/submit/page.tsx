@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ClipboardPlus, AlertTriangle, CheckCircle2, RotateCcw, Loader2, Camera, X, Sparkles } from "lucide-react";
+import { ClipboardPlus, AlertTriangle, CheckCircle2, RotateCcw, Loader2, Camera, X, Sparkles, Bot } from "lucide-react";
 import SectionHeader from "@/components/section-header";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -15,13 +15,6 @@ const CATEGORIES = [
 ];
 
 const DISTRICTS = ["เขต 1","เขต 2","เขต 3","เขต 4","เขต 7","ไม่ระบุเขต"];
-
-const DEPARTMENTS = [
-  "ฝ่ายสาธารณูปโภค","ฝ่ายจัดการคุณภาพน้ำ","ฝ่ายวิศวกรรมจราจร",
-  "ฝ่ายแบบแผนและก่อสร้าง","ฝ่ายงานควบคุมอาคารและผังเมือง",
-  "ฝ่ายสวนสาธารณะ","ฝ่ายศูนย์เครื่องจักรกล",
-  "ฝ่ายจัดสภาพแวดล้อมด้านวัสดุที่ใช้แล้ว",
-];
 
 interface Submission {
   cid: string;
@@ -39,7 +32,7 @@ interface Submission {
   duplicateWarning?: string | null;
 }
 
-const EMPTY = { text: "", category: "", district: "", community: "", department: "", lineToken: "" };
+const EMPTY = { text: "", category: "", district: "", community: "", lineToken: "" };
 
 export default function SubmitPage() {
   const [form, setForm]       = useState(EMPTY);
@@ -77,7 +70,6 @@ export default function SubmitPage() {
     if (!form.text.trim())       e.text       = "กรุณากรอกเรื่องร้องทุกข์";
     if (!form.category.trim())   e.category   = "กรุณาเลือกประเภท";
     if (!form.district)          e.district   = "กรุณาเลือกเขต";
-    if (!form.department)        e.department = "กรุณาเลือกฝ่าย";
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -95,7 +87,6 @@ export default function SubmitPage() {
       fd.append("category", form.category.trim());
       fd.append("district", form.district);
       fd.append("community", form.community.trim());
-      fd.append("department", form.department);
       if (form.lineToken.trim()) fd.append("line_token", form.lineToken.trim());
       if (photo) fd.append("photo", photo);
 
@@ -118,7 +109,7 @@ export default function SubmitPage() {
         category:    data.category ?? form.category.trim(),
         district:    form.district,
         community:   form.community.trim(),
-        department:  data.department ?? form.department,
+        department:  data.department ?? "รอเจ้าหน้าที่ยืนยัน",
         received:    new Date().toISOString().split("T")[0],
         status:      data.status,
         submittedAt: new Date().toISOString(),
@@ -209,10 +200,10 @@ export default function SubmitPage() {
     <div>
       <SectionHeader icon={<ClipboardPlus size={20} />} title="ยื่นคำร้องใหม่" badge="แบบฟอร์ม" />
 
-      {/* Connection note */}
-      <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-5 text-[13px] text-amber-800">
-        <AlertTriangle size={15} className="shrink-0 text-amber-500 mt-0.5" />
-        <span><strong>เชื่อมต่อ API จริง</strong> — คำร้องจะถูกบันทึกเข้าระบบและเข้าสู่กระบวนการพยากรณ์ทันที (ระดับความสำคัญ/วันที่คาดเสร็จยังเป็นผลจากโมเดล prototype)</span>
+      {/* AI routing notice */}
+      <div className="flex items-start gap-2.5 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-5 text-[13px] text-blue-800">
+        <Bot size={15} className="shrink-0 text-blue-500 mt-0.5" />
+        <span><strong>AI จะวิเคราะห์และมอบหมายหน่วยงานให้อัตโนมัติ</strong> — ท่านไม่ต้องเลือกฝ่ายหรือหน่วยงานเอง เจ้าหน้าที่จะตรวจสอบและยืนยันอีกครั้งก่อนดำเนินการ</span>
       </div>
 
       {apiError && (
@@ -283,22 +274,6 @@ export default function SubmitPage() {
                 className="w-full rounded-xl border border-[#E2E8F0] px-3.5 py-2.5 text-[13px] text-[#0D1117] outline-none focus:ring-2 focus:ring-[#0057FF]/20 focus:border-[#0057FF] transition-colors"
               />
             </div>
-          </div>
-
-          {/* ฝ่าย */}
-          <div>
-            <label className="block text-[13px] font-600 text-[#334155] mb-1.5">
-              ฝ่ายที่รับผิดชอบ <span className="text-[#E5484D]">*</span>
-            </label>
-            <select
-              value={form.department}
-              onChange={(e) => set("department", e.target.value)}
-              className={`w-full rounded-xl border px-3.5 py-2.5 text-[13px] text-[#0D1117] outline-none focus:ring-2 focus:ring-[#0057FF]/20 focus:border-[#0057FF] transition-colors bg-white ${errors.department ? "border-[#E5484D]" : "border-[#E2E8F0]"}`}
-            >
-              <option value="">— เลือกฝ่าย —</option>
-              {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
-            </select>
-            {errors.department && <p className="text-[11px] text-[#E5484D] mt-1">{errors.department}</p>}
           </div>
 
           {/* แนบรูปภาพ */}

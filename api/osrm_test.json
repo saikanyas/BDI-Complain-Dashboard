@@ -1,0 +1,63 @@
+{
+  "code": "Ok",
+  "trips": [
+    {
+      "legs": [
+        {
+          "steps": [],
+          "weight": 286.2,
+          "summary": "",
+          "duration": 286.2,
+          "distance": 3116
+        },
+        {
+          "steps": [],
+          "weight": 288.3,
+          "summary": "",
+          "duration": 288.3,
+          "distance": 2806.5
+        }
+      ],
+      "weight_name": "routability",
+      "geometry": "c}icBm_qrRzGdCnb@e@f@_AvBcX`bArQCrLnIMr@}EmB]uGiBxAeVpJdB`EuVnDs^z@@n@iMaGsAoDaDkC}FkD_CZkF~@}Ag@q@",
+      "weight": 574.5,
+      "duration": 574.5,
+      "distance": 5922.5
+    }
+  ],
+  "waypoints": [
+    {
+      "waypoint_index": 0,
+      "distance": 9.664167319,
+      "name": "\u0e0b\u0e2d\u0e22\u0e21\u0e30\u0e25\u0e34\u0e27\u0e31\u0e25\u0e22\u0e4c 7",
+      "location": [
+        102.819913,
+        16.440024
+      ],
+      "hint": "G5NpgkuE1oJpAAAAAAAAAAAAAAD5AAAAkGCRQgAAAAAAAAAAex0tQ2kAAAAAAAAAAAAAAPkAAADbIQEASeggBtja-gCg6CAGwNr6AAAA_wsAAAAA",
+      "trips_index": 0
+    },
+    {
+      "waypoint_index": 2,
+      "distance": 26.85560169,
+      "name": "",
+      "location": [
+        102.839841,
+        16.420188
+      ],
+      "hint": "SDp-lGw19JRSAAAAlQAAAAAAAAAyAAAAM6gJQvXndkIAAAAAf8GnQVIAAACVAAAAAAAAADIAAADbIQEAITYhBlyN-gDANiEGoIz6AAAAPwMAAAAA",
+      "trips_index": 0
+    },
+    {
+      "waypoint_index": 1,
+      "distance": 6.207163506,
+      "name": "\u0e16\u0e19\u0e19\u0e21\u0e34\u0e15\u0e23\u0e20\u0e32\u0e1e",
+      "location": [
+        102.819944,
+        16.420015
+      ],
+      "hint": "xRHJg____38XAAAAMwAAAAAAAAAAAAAAKy4RQp1RJUIAAAAAAAAAABcAAAAzAAAAAAAAAAAAAADbIQEAaOggBq-M-gCg6CAGoIz6AAAA_wAAAAAA",
+      "trips_index": 0
+    }
+  ]
+}

@@ -20,8 +20,9 @@ from model import (
     get_leaderboard, get_hotspot_forecast, build_data_digest,
     get_year_over_year, complete_complaint,
     get_known_taxonomy, get_recent_open_in_district, ai_smart_intake,
-    get_map_data, get_audit_log,
+    get_map_data, get_audit_log, update_department,
 )
+from routing_engine import calculate_route
 
 _UPLOAD_DIR = Path(__file__).parent / "uploads"
 _UPLOAD_DIR.mkdir(exist_ok=True)
@@ -135,7 +136,7 @@ app = FastAPI(title="BDI Predict API", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "PATCH"],
     allow_headers=["*"],
 )
 
@@ -204,7 +205,7 @@ async def create_complaint(
     text: str = Form(..., min_length=1),
     category: str = Form(..., min_length=1),
     district: str = Form(..., min_length=1),
-    department: str = Form(..., min_length=1),
+    department: str = Form(""),
     community: str = Form(""),
     division: str = Form(""),
     line_token: str = Form(""),
@@ -290,6 +291,41 @@ def audit_log(
 def map_data():
     return get_map_data(_state["df"])
 
+class RoutingRequest(BaseModel):
+    cids: list[str]
+    start_lat: Optional[float] = None
+    start_lng: Optional[float] = None
+
+@app.post("/routing")
+def get_routing(
+    payload: RoutingRequest,
+    x_admin_user: Optional[str] = Header(None),
+    x_admin_token: Optional[str] = Header(None),
+):
+    """คำนวณเส้นทาง OSRM สำหรับคำร้องที่เลือก — ต้อง login ก่อน"""
+    require_admin(x_admin_user, x_admin_token)
+    
+    # ดึงข้อมูล community จาก cid
+    df = _state["df"]
+    tasks = []
+    
+    for cid in payload.cids:
+        # หา row ที่มี cid ตรงกัน
+        row = df[df["cid"] == cid]
+        if not row.empty:
+            community = row.iloc[0]["community"]
+            if community and str(community).strip() and str(community).lower() != "nan":
+                tasks.append({"cid": cid, "community": str(community)})
+                
+    start_point = None
+    if payload.start_lat is not None and payload.start_lng is not None:
+        start_point = {"lat": payload.start_lat, "lng": payload.start_lng}
+        
+    result = calculate_route(tasks, start_point)
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+        
+    return result
 
 @app.get("/yoy")
 def year_over_year():
@@ -360,6 +396,29 @@ async def mark_complete(
         closed_by=username,
         after_photo_url=f"/uploads/{photo_filename}" if photo_filename else None,
     )
+
+
+class DeptUpdateIn(BaseModel):
+    department: str
+
+
+@app.patch("/complaints/{cid:path}/department")
+def change_department(
+    cid: str,
+    payload: DeptUpdateIn,
+    x_admin_user: Optional[str] = Header(None),
+    x_admin_token: Optional[str] = Header(None),
+):
+    """เปลี่ยนหน่วยงาน/ฝ่ายที่รับผิดชอบคำร้อง — Auto-save ทันทีเมื่อ Admin เปลี่ยน dropdown"""
+    username = require_admin(x_admin_user, x_admin_token)
+    if not payload.department.strip():
+        raise HTTPException(status_code=400, detail="ชื่อหน่วยงานไม่ควรว่าง")
+    ok = update_department(cid, payload.department.strip(), username)
+    if not ok:
+        raise HTTPException(status_code=404, detail=f"ไม่พบคำร้องเลขที่ {cid}")
+    _state["df"] = load_data()
+    _refresh_predictions()
+    return {"cid": cid, "department": payload.department.strip(), "changed_by": username}
 
 
 @app.get("/recent")

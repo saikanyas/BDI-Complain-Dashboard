@@ -116,10 +116,17 @@ export default function PredictPage() {
     });
     fetch(`${API}/pending-predictions?${params.toString()}`)
       .then((r) => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
-      .then((data: PendingResponse) => {
-        setRows(data.items);
-        setTotal(data.total);
-        setTotalPages(data.total_pages);
+      .then((data: PendingResponse | PendingRow[]) => {
+        // รองรับทั้ง API ใหม่ { items: [...] } และ API เก่าที่ส่ง Array โดยตรง
+        if (Array.isArray(data)) {
+          setRows(data);
+          setTotal(data.length);
+          setTotalPages(1);
+        } else {
+          setRows(data.items ?? []);
+          setTotal(data.total ?? 0);
+          setTotalPages(data.total_pages ?? 1);
+        }
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));

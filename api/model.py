@@ -444,6 +444,26 @@ def complete_complaint(cid: str, after_photo_filename: str = "", closed_by: str 
     return True
 
 
+def update_department(cid: str, new_department: str, changed_by: str) -> bool:
+    """
+    เปลี่ยนหน่วยงาน/ฝ่ายที่รับผิดชอบคำร้อง — Admin ยืนยันแทนค่าที่ AI แนะนำ
+    บันทึกลง audit log ด้วยเพื่อตรวจสอบย้อนหลัง
+    คืน True ถ้าสำเร็จ, False ถ้าไม่พบ cid
+    """
+    csv_path = _HERE / "data" / "data.csv"
+    df = _read_csv_for_write(csv_path)
+
+    mask = df["เลขคำร้อง"].astype(str).str.strip() == cid.strip()
+    if not mask.any():
+        return False
+
+    df.loc[mask, "ฝ่าย"] = new_department
+    df.to_csv(csv_path, index=False, encoding="utf-8-sig")
+
+    _append_audit_log(cid, f"เปลี่ยนฝ่าย → {new_department}", changed_by)
+    return True
+
+
 def get_known_taxonomy(df: pd.DataFrame) -> dict:
     """
     ดึงรายชื่อประเภทคำร้อง/หน่วยงานที่มีอยู่จริงในข้อมูล
@@ -762,6 +782,7 @@ def build_predictions(df: pd.DataFrame, cat_model, dept_model, tok_fn, priority_
             "received":       received.date().isoformat() if pd.notna(received) else None,
             "category":       str(cat) if pd.notna(cat) else _UNKNOWN,
             "department":     str(dept) if pd.notna(dept) else _UNKNOWN,
+            "ai_suggested_dept": str(dept) if pd.notna(dept) else _UNKNOWN,
             "priority":       str(row.get("priority_override") or row.get("priority_ml", "กลาง")),
             "ai_assessed":    bool(row.get("priority_override")),
             "predicted_days": days,

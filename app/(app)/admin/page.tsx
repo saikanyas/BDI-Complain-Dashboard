@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import {
   ShieldCheck, CheckCircle2, AlertTriangle, Camera, X, Loader2, Lock, LogOut, History,
-  Search as Search2, ChevronLeft, ChevronRight,
+  Search as Search2, ChevronLeft, ChevronRight, Navigation
 } from "lucide-react";
+import Link from "next/link";
 import SectionHeader from "@/components/section-header";
 import EmptyState from "@/components/empty-state";
 import { SkeletonList } from "@/components/skeleton";
@@ -19,6 +20,7 @@ interface PendingRow {
   district: string;
   category: string;
   department: string;
+  ai_suggested_dept: string;
   received: string | null;
   expected_done: string | null;
   overdue: boolean;
@@ -192,9 +194,16 @@ function AdminPanel({
     fetch(`${API}/pending-predictions?${params.toString()}`)
       .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((data) => {
-        setRows(data.items);
-        setTotal(data.total);
-        setTotalPages(data.total_pages);
+        // รองรับทั้ง API ใหม่ { items: [...] } และ API เก่าที่ส่ง Array โดยตรง
+        if (Array.isArray(data)) {
+          setRows(data);
+          setTotal(data.length);
+          setTotalPages(1);
+        } else {
+          setRows(data.items ?? []);
+          setTotal(data.total ?? 0);
+          setTotalPages(data.total_pages ?? 1);
+        }
       })
       .catch((e) => setError(e instanceof Error ? e.message : "เชื่อมต่อ API ไม่ได้"))
       .finally(() => setLoading(false));
@@ -242,12 +251,21 @@ function AdminPanel({
         </div>
       </div>
 
-      <button
-        onClick={toggleLog}
-        className="flex items-center gap-1.5 text-[12.5px] text-[#0057FF] hover:underline mb-4"
-      >
-        <History size={13} /> {showLog ? "ซ่อนประวัติการปิดงาน" : "ดูประวัติการปิดงาน (audit log)"}
-      </button>
+      <div className="flex items-center gap-4 mb-4">
+        <button
+          onClick={toggleLog}
+          className="flex items-center gap-1.5 text-[12.5px] text-[#0057FF] hover:underline"
+        >
+          <History size={13} /> {showLog ? "ซ่อนประวัติการปิดงาน" : "ดูประวัติการปิดงาน (audit log)"}
+        </button>
+        
+        <Link 
+          href="/admin/routing"
+          className="flex items-center gap-1.5 text-[12.5px] text-[#0057FF] hover:underline"
+        >
+          <Navigation size={13} /> จัดระบบเส้นทาง (Routing)
+        </Link>
+      </div>
 
       {showLog && (
         <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 mb-5">
@@ -376,6 +394,46 @@ function AdminRow({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError]   = useState<string | null>(null);
 
+  // Department state — เริ่มด้วยค่าปัจจุบัน (ซึ่ง AI กำหนดมาตอนรับคำร้อง)
+  const [department, setDepartment] = useState(row.department);
+  const [deptSaving, setDeptSaving] = useState(false);
+  const [deptSaved, setDeptSaved]   = useState(false);
+  const [departments, setDepartments] = useState<string[]>([]);
+
+  // โหลดรายชื่อฝ่ายจาก taxonomy เมื่อ expand
+  useEffect(() => {
+    if (!open || departments.length > 0) return;
+    fetch(`${API}/taxonomy`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d?.departments) setDepartments(d.departments); })
+      .catch(() => {});
+  }, [open, departments.length]);
+
+  async function handleDeptChange(newDept: string) {
+    setDepartment(newDept);
+    setDeptSaved(false);
+    setDeptSaving(true);
+    try {
+      const res = await fetch(`${API}/complaints/${encodeURIComponent(row.cid)}/department`, {
+        method: "PATCH",
+        headers: { ...authHeaders(session), "Content-Type": "application/json" },
+        body: JSON.stringify({ department: newDept }),
+      });
+      if (res.status === 401) { onUnauthorized(); return; }
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.detail ?? `HTTP ${res.status}`);
+      }
+      setDeptSaved(true);
+      setTimeout(() => setDeptSaved(false), 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "เปลี่ยนหน่วยงานไม่สำเร็จ");
+      setDepartment(row.department); // rollback
+    } finally {
+      setDeptSaving(false);
+    }
+  }
+
   function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -430,7 +488,35 @@ function AdminRow({
 
       {open && (
         <div className="px-5 pb-5 border-t border-[#F1F5F9] pt-4 space-y-3">
-          <p className="text-[12px] text-[#94A3B8]">หน่วยงาน: {row.department} · รับเรื่อง: {row.received ?? "—"}</p>
+          <p className="text-[12px] text-[#94A3B8]">รับเรื่อง: {row.received ?? "—"}</p>
+
+          {/* Department section */}
+          <div className="bg-[#F8FAFC] rounded-xl p-3 space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-[12px] font-600 text-[#334155]">หน่วยงานที่รับผิดชอบ</span>
+              <span className="inline-flex items-center gap-1 text-[10.5px] font-600 text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                AI แนะนำ: {row.ai_suggested_dept}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <select
+                value={department}
+                onChange={(e) => handleDeptChange(e.target.value)}
+                disabled={deptSaving}
+                className="flex-1 border border-[#E2E8F0] rounded-lg px-3 py-1.5 text-[12.5px] text-[#0D1117] focus:outline-none focus:ring-2 focus:ring-[#0057FF]/30 focus:border-[#0057FF] bg-white disabled:opacity-60"
+              >
+                {departments.length === 0 && <option value={department}>{department}</option>}
+                {departments.map((d) => <option key={d} value={d}>{d}</option>)}
+              </select>
+              {deptSaving && (
+                <Loader2 size={14} className="animate-spin text-[#94A3B8] shrink-0" />
+              )}
+              {deptSaved && (
+                <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
+              )}
+            </div>
+          </div>
 
           {error && (
             <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-[12px] text-red-700">
