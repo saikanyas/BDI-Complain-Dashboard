@@ -42,7 +42,6 @@ function colorFor(completionRate: number): string {
 
 export default function KhonKaenMap({ data }: { data: DistrictPoint[] }) {
   const maxTotal = Math.max(...data.map((d) => d.total), 1);
-  let unknownIndex = 0;
   const unknownCount = data.filter((d) => !DISTRICT_COORDS[d.district]).length;
 
   return (
@@ -56,10 +55,13 @@ export default function KhonKaenMap({ data }: { data: DistrictPoint[] }) {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      {data.map((d) => {
+      {data.map((d, index) => {
         const known = DISTRICT_COORDS[d.district];
+        const unknownIndex = data
+          .slice(0, index)
+          .filter((previous) => !DISTRICT_COORDS[previous.district])
+          .length;
         const coords = known ?? fallbackCoords(unknownIndex, unknownCount);
-        if (!known) unknownIndex += 1;
         const radius = 14 + (d.total / maxTotal) * 36; // 14–50px ตามสัดส่วนจำนวนคำร้อง
         return (
           <CircleMarker

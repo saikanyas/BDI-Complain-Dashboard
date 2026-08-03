@@ -1,12 +1,12 @@
 {
-  "total": 462,
-  "done": 445,
-  "pending": 17,
-  "avg_sla": 31.2,
-  "median_sla": 15.0,
-  "max_sla": 385,
-  "completion_rate": 96.3,
-  "top_category": "ซ่อมแซมไฟฟ้าชำรุด",
+  "total": 464,
+  "done": 452,
+  "pending": 12,
+  "avg_sla": 28.4,
+  "median_sla": 28,
+  "max_sla": 54,
+  "completion_rate": 97.4,
+  "top_category": "ประเภทจำลอง 01 - ไฟฟ้า",
   "total_districts": 6,
   "total_depts": 8
 }

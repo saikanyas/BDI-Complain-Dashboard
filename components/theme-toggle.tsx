@@ -10,9 +10,11 @@ export default function ThemeToggle() {
   useEffect(() => {
     const saved = localStorage.getItem("bdi_theme");
     const isDark = saved === "dark";
-    setDark(isDark);
     document.documentElement.classList.toggle("dark", isDark);
-    setMounted(true);
+    queueMicrotask(() => {
+      setDark(isDark);
+      setMounted(true);
+    });
   }, []);
 
   function toggle() {

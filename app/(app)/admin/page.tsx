@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ShieldCheck, CheckCircle2, AlertTriangle, Camera, X, Loader2, Lock, LogOut, History,
   Search as Search2, ChevronLeft, ChevronRight, Navigation
@@ -38,8 +38,10 @@ export default function AdminPage() {
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY);
     const username = localStorage.getItem(USER_KEY);
-    if (token && username) setSession({ token, username });
-    setChecked(true);
+    queueMicrotask(() => {
+      if (token && username) setSession({ token, username });
+      setChecked(true);
+    });
   }, []);
 
   function handleLogout() {
@@ -183,7 +185,7 @@ function AdminPanel({
     return () => clearTimeout(t);
   }, [searchInput]);
 
-  function load() {
+  const load = useCallback(() => {
     setLoading(true);
     const params = new URLSearchParams({
       page: String(page), limit: "20",
@@ -207,9 +209,11 @@ function AdminPanel({
       })
       .catch((e) => setError(e instanceof Error ? e.message : "เชื่อมต่อ API ไม่ได้"))
       .finally(() => setLoading(false));
-  }
+  }, [page, search, district, overdueOnly]);
 
-  useEffect(load, [page, search, district, overdueOnly]);
+  useEffect(() => {
+    queueMicrotask(load);
+  }, [load]);
 
   function handleCompleted(cid: string) {
     setRows((rs) => rs.filter((r) => r.cid !== cid));

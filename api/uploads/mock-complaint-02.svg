@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="640" viewBox="0 0 960 640" role="img" aria-labelledby="title desc">
+  <title id="title">Mock complaint image 02</title>
+  <desc id="desc">Synthetic illustration used for the public demo dataset.</desc>
+  <rect width="960" height="640" fill="#eefaf5"/>
+  <rect x="80" y="105" width="800" height="430" rx="28" fill="#ffffff" stroke="#73d6b0" stroke-width="8"/>
+  <path d="M205 430h550" stroke="#0b8f68" stroke-width="30" stroke-linecap="round"/>
+  <path d="M260 430c22-120 80-175 140-175s118 55 140 175M405 430c20-70 48-105 75-105s55 35 75 105" fill="none" stroke="#26b98b" stroke-width="22"/>
+  <circle cx="480" cy="182" r="48" fill="#ffd27d"/>
+  <text x="480" y="590" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#14664d">MOCK PHOTO 02</text>
+</svg>

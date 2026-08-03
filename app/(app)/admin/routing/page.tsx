@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Loader2, MapPin, Navigation, Crosshair } from "lucide-react";
 import dynamic from "next/dynamic";
+import type { RoutingRouteResult } from "@/components/RoutingMap";
 
 // โหลด RoutingMap แบบ dynamic เพื่อไม่ให้ server-side rendering พัง (เพราะ leaflet ต้องรันบน browser)
 const RoutingMap = dynamic(() => import("@/components/RoutingMap"), { 
@@ -10,14 +11,32 @@ const RoutingMap = dynamic(() => import("@/components/RoutingMap"), {
     loading: () => <div className="w-full h-full min-h-[500px] flex items-center justify-center bg-gray-50 rounded-lg"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div>
 });
 
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
+interface PendingTask {
+    cid: string;
+    text?: string;
+    community?: string | null;
+}
+
+interface PendingTaskResponse {
+    items?: PendingTask[];
+}
+
+interface RoutingRequest {
+    cids: string[];
+    start_lat?: number;
+    start_lng?: number;
+}
+
 export default function RoutingPage() {
-    const [tasks, setTasks] = useState<any[]>([]);
+    const [tasks, setTasks] = useState<PendingTask[]>([]);
     const [selectedCids, setSelectedCids] = useState<string[]>([]);
     const [useCurrentLocation, setUseCurrentLocation] = useState(false);
     const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isFetchingTasks, setIsFetchingTasks] = useState(true);
-    const [routeResult, setRouteResult] = useState<any>(null);
+    const [routeResult, setRouteResult] = useState<RoutingRouteResult | null>(null);
     const [currentLegIndex, setCurrentLegIndex] = useState(0);
     const [error, setError] = useState("");
 
@@ -26,8 +45,8 @@ export default function RoutingPage() {
         const fetchTasks = async () => {
             try {
                 // Fetch up to 100 pending tasks for selection
-                const res = await fetch("http://127.0.0.1:8000/pending-predictions?limit=100");
-                const data = await res.json();
+                const res = await fetch(`${API}/pending-predictions?limit=100`);
+                const data = await res.json() as PendingTaskResponse;
                 setTasks(data.items || []);
             } catch (err) {
                 console.error("Failed to load tasks", err);
@@ -41,7 +60,7 @@ export default function RoutingPage() {
 
     // ติดตามพิกัด GPS ปัจจุบันเมื่อเปิดสวิตช์ (Live Tracking)
     useEffect(() => {
-        let watchId: number;
+        let watchId: number | undefined;
         if (useCurrentLocation) {
             if ("geolocation" in navigator) {
                 watchId = navigator.geolocation.watchPosition(
@@ -59,15 +78,17 @@ export default function RoutingPage() {
                     { enableHighAccuracy: true }
                 );
             } else {
-                setError("เบราว์เซอร์ของคุณไม่รองรับการดึงตำแหน่งปัจจุบัน");
-                setUseCurrentLocation(false);
+                queueMicrotask(() => {
+                    setError("เบราว์เซอร์ของคุณไม่รองรับการดึงตำแหน่งปัจจุบัน");
+                    setUseCurrentLocation(false);
+                });
             }
         } else {
-            setCurrentLocation(null);
+            queueMicrotask(() => setCurrentLocation(null));
         }
 
         return () => {
-            if (watchId) navigator.geolocation.clearWatch(watchId);
+            if (watchId !== undefined) navigator.geolocation.clearWatch(watchId);
         };
     }, [useCurrentLocation]);
 
@@ -95,16 +116,19 @@ export default function RoutingPage() {
 
         try {
             // ดึง admin user/token จาก localStorage
-            const username = localStorage.getItem("bdi_admin_user") || "สมชาย";
-            const token = localStorage.getItem("bdi_admin_token") || "dummy"; // You might need to adjust auth handling
+            const username = localStorage.getItem("bdi_admin_user");
+            const token = localStorage.getItem("bdi_admin_token");
+            if (!username || !token) {
+                throw new Error("กรุณาเข้าสู่ระบบผู้ดูแลก่อนคำนวณเส้นทาง");
+            }
 
-            const payload: any = { cids: selectedCids };
+            const payload: RoutingRequest = { cids: selectedCids };
             if (useCurrentLocation && currentLocation) {
                 payload.start_lat = currentLocation.lat;
                 payload.start_lng = currentLocation.lng;
             }
 
-            const res = await fetch("http://127.0.0.1:8000/routing", {
+            const res = await fetch(`${API}/routing`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -122,9 +146,9 @@ export default function RoutingPage() {
             const data = await res.json();
             setRouteResult(data);
             setCurrentLegIndex(0);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
-            setError(err.message || "ไม่สามารถคำนวณเส้นทางได้ กรุณาลองใหม่อีกครั้ง");
+            setError(err instanceof Error ? err.message : "ไม่สามารถคำนวณเส้นทางได้ กรุณาลองใหม่อีกครั้ง");
         } finally {
             setIsLoading(false);
         }

@@ -1,12 +1,46 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polyline, Rectangle, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
+export interface RoutingTask {
+    cid: string;
+    community: string;
+    lat: number;
+    lng: number;
+    priority?: number;
+    boundingbox?: [number, number, number, number];
+}
+
+interface GroupedRoutingTask extends RoutingTask {
+    originalIndex: number;
+}
+
+interface RoutingGeometry {
+    type: string;
+    coordinates: [number, number][];
+}
+
+interface RoutingLeg {
+    distance: number;
+    duration: number;
+    geometry?: RoutingGeometry;
+}
+
+export interface RoutingRouteResult {
+    tasks: RoutingTask[];
+    geometry?: RoutingGeometry;
+    legs: RoutingLeg[];
+    distance: number;
+    duration: number;
+    error?: string;
+}
+
 // Fix Leaflet's default icon path issues in Next.js
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+const defaultIconPrototype = L.Icon.Default.prototype as unknown as { _getIconUrl?: string };
+delete defaultIconPrototype._getIconUrl;
 L.Icon.Default.mergeOptions({
     iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
     iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
@@ -96,7 +130,7 @@ function getDistanceToSegment(p: {lat: number, lng: number}, v: {lat: number, ln
 }
 
 interface RoutingMapProps {
-    routeResult: any;
+    routeResult: RoutingRouteResult | null;
     currentLocation: {lat: number, lng: number} | null;
     currentLegIndex?: number;
 }
@@ -109,7 +143,7 @@ export default function RoutingMap({ routeResult, currentLocation, currentLegInd
     let bounds: L.LatLngBounds | null = null;
     
     if (routeResult && routeResult.geometry) {
-        routeCoords = routeResult.geometry.coordinates.map((coord: number[]) => [coord[1], coord[0]]);
+        routeCoords = routeResult.geometry.coordinates.map(([lng, lat]): [number, number] => [lat, lng]);
         if (routeCoords.length > 0) {
             bounds = L.latLngBounds(routeCoords);
         }
@@ -131,12 +165,12 @@ export default function RoutingMap({ routeResult, currentLocation, currentLegInd
                 
                 {/* วาดเส้นทางแบบแยก Leg */}
                 {routeResult && routeResult.legs ? (
-                    routeResult.legs.map((leg: any, idx: number) => {
+                    routeResult.legs.map((leg, idx) => {
                         if (idx < currentLegIndex) return null; // ซ่อนเส้นทางที่ผ่านไปแล้วตามที่ผู้ใช้ต้องการ
                         
                         if (!leg.geometry || !leg.geometry.coordinates) return null;
                         
-                        let legCoords: [number, number][] = leg.geometry.coordinates.map((coord: number[]) => [coord[1], coord[0]]);
+                        let legCoords: [number, number][] = leg.geometry.coordinates.map(([lng, lat]): [number, number] => [lat, lng]);
                         const isActive = idx === currentLegIndex;
                         
                         // ถ้านี่คือเส้นทางปัจจุบันที่กำลังไป และมีพิกัด GPS -> ให้หั่นท่อนที่เดินผ่านมาแล้วทิ้ง
@@ -202,11 +236,10 @@ export default function RoutingMap({ routeResult, currentLocation, currentLegInd
                 
                 {/* จัดกลุ่มและวาด Bounding Box (วาดแค่ 1 กล่องต่อ 1 พื้นที่เพื่อไม่ให้ซ้อนกันหรือเบี้ยว) */}
                 {routeResult && routeResult.tasks && (() => {
-                    const renderedBboxes = new Set();
-                    const groups: Record<string, any[]> = {};
+                    const groups: Record<string, GroupedRoutingTask[]> = {};
                     
                     // จัดกลุ่ม task ตามชุมชน
-                    routeResult.tasks.forEach((task: any, idx: number) => {
+                    routeResult.tasks.forEach((task, idx) => {
                         const comm = task.community || "unknown";
                         if (!groups[comm]) groups[comm] = [];
                         groups[comm].push({ ...task, originalIndex: idx });
@@ -236,16 +269,7 @@ export default function RoutingMap({ routeResult, currentLocation, currentLegInd
                         // ถลุ่มเดียวกันมีหลายจุด วาดพื้นหลังเชื่อมให้เห็นชัดเจน
                         let groupConnector = null;
                         if (tasksInGroup.length > 1) {
-                            const lats = tasksInGroup.map(t => t.lat);
-                            const lngs = tasksInGroup.map(t => t.lng);
-                            const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
-                            const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
-                            
-                            // วาดวงกลมไฮไลต์รอบๆ จุดที่ถูก offset ออกมา
-                            import("react-leaflet").then(mod => {
-                                // Dynamic import isn't strictly needed for Circle, we can use standard Circle from react-leaflet
-                            });
-                            // We already imported Circle? No, let's just use Polyline to connect them
+                            // วาดเส้นเชื่อมให้เห็นกลุ่มจุดที่อยู่ในพื้นที่เดียวกัน
                             const connectCoords: [number, number][] = tasksInGroup.map(t => [t.lat, t.lng]);
                             groupConnector = (
                                 <Polyline 

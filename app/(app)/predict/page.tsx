@@ -92,7 +92,7 @@ export default function PredictPage() {
 
   // โหลดรายชื่อเขตสำหรับ dropdown filter (ครั้งเดียว)
   useEffect(() => {
-    setUserVotes(loadVotes());
+    queueMicrotask(() => setUserVotes(loadVotes()));
     fetch(`${API}/taxonomy`)
       .then((r) => r.ok ? r.json() : null)
       .then((d) => { if (d) setDistricts(d.districts); })
@@ -106,8 +106,10 @@ export default function PredictPage() {
   }, [searchInput]);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
+    queueMicrotask(() => {
+      setLoading(true);
+      setError(null);
+    });
     const params = new URLSearchParams({
       page: String(page), limit: String(PAGE_SIZE),
       ...(search ? { search } : {}),

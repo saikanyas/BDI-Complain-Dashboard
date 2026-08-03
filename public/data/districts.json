@@ -1,38 +1,38 @@
 [
   {
-    "name": "เขต 1",
-    "total": 64,
-    "done": 59,
-    "rate": 92.2
+    "name": "เขตจำลอง 01",
+    "total": 78,
+    "done": 76,
+    "rate": 97.4
   },
   {
-    "name": "เขต 2",
-    "total": 88,
-    "done": 85,
-    "rate": 96.6
+    "name": "เขตจำลอง 02",
+    "total": 78,
+    "done": 76,
+    "rate": 97.4
   },
   {
-    "name": "เขต 3",
-    "total": 93,
-    "done": 93,
-    "rate": 100.0
+    "name": "เขตจำลอง 03",
+    "total": 77,
+    "done": 75,
+    "rate": 97.4
   },
   {
-    "name": "เขต 4",
-    "total": 73,
-    "done": 69,
-    "rate": 94.5
+    "name": "เขตจำลอง 04",
+    "total": 77,
+    "done": 75,
+    "rate": 97.4
   },
   {
-    "name": "เขต 7",
-    "total": 1,
-    "done": 1,
-    "rate": 100.0
+    "name": "เขตจำลอง 05",
+    "total": 77,
+    "done": 75,
+    "rate": 97.4
   },
   {
-    "name": "ไม่ระบุเขต",
-    "total": 143,
-    "done": 138,
-    "rate": 96.5
+    "name": "เขตจำลอง 06",
+    "total": 77,
+    "done": 75,
+    "rate": 97.4
   }
 ]

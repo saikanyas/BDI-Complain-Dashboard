@@ -47,19 +47,33 @@ def check_rate_limit(client_ip: str) -> None:
 
 # === Admin auth (เบสิค ไม่มีต้นทุน ไม่พึ่งบริการภายนอก) ===
 # ตั้งรายชื่อเจ้าหน้าที่ผ่าน env var ADMIN_USERS รูปแบบ "ชื่อ1:รหัส1,ชื่อ2:รหัส2"
-# ก่อน deploy จริง ควรเปลี่ยนจาก default นี้เสมอ
+# ถ้าไม่ตั้งค่า ระบบจะปิดการ login ของ admin ไว้เพื่อไม่ให้มี credential เริ่มต้นใน source code
 def _parse_admin_users() -> dict:
-    raw = os.environ.get("ADMIN_USERS", "สมชาย:admin1234,สมหญิง:admin5678")
+    raw = os.environ.get("ADMIN_USERS", "").strip()
     users = {}
     for pair in raw.split(","):
         if ":" in pair:
             name, pw = pair.split(":", 1)
-            users[name.strip()] = pw.strip()
+            if name.strip() and pw.strip():
+                users[name.strip()] = pw.strip()
     return users
 
 
 _ADMIN_USERS  = _parse_admin_users()
-_ADMIN_SECRET = os.environ.get("ADMIN_SECRET", "kkmuni-secret-salt-2569")
+_ADMIN_SECRET = os.environ.get("ADMIN_SECRET", "").strip()
+
+
+def _cors_origins() -> list[str]:
+    raw = os.environ.get(
+        "CORS_ORIGINS",
+        "http://localhost:3000,http://127.0.0.1:3000",
+    )
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
+def _ensure_admin_auth_configured() -> None:
+    if not _ADMIN_USERS or not _ADMIN_SECRET:
+        raise HTTPException(status_code=503, detail="Admin authentication is not configured")
 
 
 def _make_token(username: str, password: str) -> str:
@@ -75,6 +89,7 @@ def require_admin(
     หมายเหตุ: HTTP header ไม่รองรับ UTF-8 ตรงๆ (encode เป็น latin-1 เท่านั้น) ฝั่ง frontend จึงต้อง
     encodeURIComponent ชื่อผู้ใช้ก่อนส่งมาเป็น header เสมอ — ที่นี่จึง unquote กลับก่อนเทียบ
     """
+    _ensure_admin_auth_configured()
     if not x_admin_user or not x_admin_token:
         raise HTTPException(status_code=401, detail="ต้อง login ก่อนใช้งานส่วนนี้")
 
@@ -135,7 +150,7 @@ app = FastAPI(title="BDI Predict API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_cors_origins(),
     allow_methods=["GET", "POST", "PATCH"],
     allow_headers=["*"],
 )
@@ -351,6 +366,7 @@ class LoginOut(BaseModel):
 
 @app.post("/admin/login", response_model=LoginOut)
 def admin_login(payload: LoginIn):
+    _ensure_admin_auth_configured()
     expected_password = _ADMIN_USERS.get(payload.username)
     if not expected_password or not hmac.compare_digest(payload.password.encode(), expected_password.encode()):
         raise HTTPException(status_code=401, detail="ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง")

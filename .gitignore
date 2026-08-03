@@ -1,19 +1,44 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Node.js / Next.js
+node_modules/
+.next/
+out/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
 # Python
-venv/
 __pycache__/
 *.py[cod]
+.venv/
+venv/
+env/
+api/venv/
+.pytest_cache/
+.mypy_cache/
 
-# Environment
-.env
-
-# macOS
-.DS_Store
-
-# Node.js
-node_modules/
-
-# VS Code
+# IDE
 .vscode/
-EOFEOF
+.idea/
 
-.next/
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs, coverage and temporary files
+*.log
+coverage/
+.coverage
+htmlcov/
+*.tmp
+*.temp
+
+# Runtime uploads are not source-controlled; only checked-in mock SVGs are allowed.
+api/uploads/*
+!api/uploads/mock-*.svg
